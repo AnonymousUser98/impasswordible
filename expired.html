@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Password Expired</title>
+
+<style>
+	body {
+		font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+		background: #f1f3f6;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100vh;
+		margin: 0;
+	}
+
+	.panel {
+		background: #fff;
+		width: 440px;
+		padding: 26px;
+		border-radius: 8px;
+		box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+	}
+
+	h1 {
+		margin-top: 0;
+		font-size: 21px;
+	}
+
+	p {
+		font-size: 14px;
+		color: #333;
+	}
+
+	input {
+		width: 100%;
+		padding: 10px;
+		font-size: 15px;
+		margin-top: 10px;
+		box-sizing: border-box;
+	}
+
+	button {
+		margin-top: 14px;
+		width: 100%;
+		padding: 10px;
+		font-size: 15px;
+		background: #1a73e8;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+
+	button:hover {
+		background: #155fc2;
+	}
+
+	ul {
+		margin-top: 14px;
+		padding-left: 18px;
+		font-size: 13px;
+	}
+
+	.error {
+		margin-top: 10px;
+		color: #b00020;
+		font-size: 13px;
+	}
+
+	.status {
+		margin-top: 10px;
+		font-size: 13px;
+		color: #555;
+	}
+</style>
+</head>
+
+<body>
+<div class="panel">
+	<h1>Password Expired</h1>
+	<p>Your password no longer meets current security policy.</p>
+
+	<input id="pwd" type="text" placeholder="Enter new password">
+
+	<button onclick="checkPassword()">Update Password</button>
+
+	<ul id="rules"></ul>
+
+	<div class="status" id="status"></div>
+	<div class="error" id="error"></div>
+</div>
+
+<script>
+let stage = 0;
+
+const rules = [
+	{
+		text: "Must be at least 8 characters long",
+		test: p => p.length >= 8
+	},
+	{
+		text: "Must contain an uppercase letter",
+		test: p => /[A-Z]/.test(p)
+	},
+	{
+		text: "Must contain a lowercase letter",
+		test: p => /[a-z]/.test(p)
+	},
+	{
+		text: "Must contain a number",
+		test: p => /\d/.test(p)
+	},
+	{
+		text: "Must contain a symbol",
+		test: p => /[^A-Za-z0-9]/.test(p)
+	},
+	{
+		text: "Must contain at least one repeated character",
+		test: p => /(.)\1/.test(p)
+	},
+	{
+		text: "Length must be a prime number",
+		test: p => {
+			const n = p.length;
+			if (n < 2) return false;
+			for (let i = 2; i <= Math.sqrt(n); i++) {
+				if (n % i === 0) return false;
+			}
+			return true;
+		}
+	},
+	{
+		text: "Must contain a palindrome of 3 characters",
+		test: p => {
+			for (let i = 0; i < p.length - 2; i++) {
+				if (p[i] === p[i+2]) return true;
+			}
+			return false;
+		}
+	},
+	{
+		text: "Must include a misspelled weekday",
+		test: p => /mnday|tusday|wednsday|thurday|fridy|saterday|snday/i.test(p)
+	},
+	{
+		text: "Must include exactly two emojis",
+		test: p => {
+			const emojis = p.match(/[\p{Extended_Pictographic}]/gu);
+			return emojis && emojis.length === 2;
+		}
+	},
+	{
+		text: "Must contain a number that feels secure",
+		test: p => /\d/.test(p) && Math.random() > 0.4
+	},
+	{
+		text: "Must not look intentional",
+		test: p => Math.random() > 0.5
+	}
+];
+
+function renderRules() {
+	const ul = document.getElementById("rules");
+	ul.innerHTML = "";
+	for (let i = 0; i <= stage; i++) {
+		const li = document.createElement("li");
+		li.textContent = rules[i].text;
+		ul.appendChild(li);
+	}
+}
+
+renderRules();
+
+function checkPassword() {
+	const pwd = document.getElementById("pwd").value;
+	const error = document.getElementById("error");
+	const status = document.getElementById("status");
+
+	error.textContent = "";
+	status.textContent = "Checking password…";
+
+	setTimeout(() => {
+
+		// 🔒 Check ALL rules so far
+		for (let i = 0; i <= stage; i++) {
+			if (!rules[i].test(pwd)) {
+				error.textContent =
+					"Password failed requirement: “" + rules[i].text + "”";
+				status.textContent = "";
+				return;
+			}
+		}
+
+		// Passed everything so far — add a new rule
+		stage++;
+
+		if (stage >= rules.length) {
+			stage = rules.length - 1;
+			error.textContent =
+				"Security policy updated during verification.";
+		} else {
+			error.textContent = "";
+		}
+
+		renderRules();
+		status.textContent =
+			"Password accepted pending additional compliance checks.";
+
+	}, 800 + Math.random() * 1000);
+}
+</script>
+</body>
+</html>
